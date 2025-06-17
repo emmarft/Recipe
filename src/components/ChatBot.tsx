@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { MessageSquare, Send } from 'lucide-react';
 import { Recette, RepasWithDetails } from '../lib/supabase';
-import { RecipeRecommender } from '../lib/recipeRecommender';
+import { OllamaService } from '../lib/ollamaService';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -13,12 +13,13 @@ export function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [recommender] = useState(() => new RecipeRecommender());
+  const [ollamaService] = useState(() => new OllamaService());
+  const [recettes, setRecettes] = useState<Recette[]>([]);
 
-  // Charger les recettes dans l'arbre de décision
+  // Charger les recettes
   useEffect(() => {
     const loadRecipes = async () => {
-      const { data: recettes, error } = await supabase
+      const { data: recettesData, error } = await supabase
         .from('recettes')
         .select('*');
 
@@ -27,11 +28,11 @@ export function ChatBot() {
         return;
       }
 
-      recettes.forEach(recette => recommender.addRecipe(recette));
+      setRecettes(recettesData);
     };
 
     loadRecipes();
-  }, [recommender]);
+  }, []);
 
   // Récupérer l'historique des repas
   const getRepasHistory = async () => {
@@ -51,28 +52,7 @@ export function ChatBot() {
     return repasData as RepasWithDetails[];
   };
 
-  // Analyser les ingrédients depuis le message de l'utilisateur
-  const parseIngredientsFromMessage = (message: string): string[] => {
-    return message
-      .toLowerCase()
-      .split(/[,.]/) // Sépare par virgule ou point
-      .map(ingredient => ingredient.trim())
-      .filter(ingredient => ingredient.length > 0);
-  };
 
-  // Formater la réponse avec les recettes recommandées
-  const formatRecipeResponse = (recettes: Recette[]): string => {
-    if (recettes.length === 0) {
-      return 'Je ne trouve pas de recettes correspondant à vos ingrédients. Pourriez-vous me donner plus de détails sur les ingrédients dont vous disposez ?';
-    }
-
-    const response = ['Voici les recettes que je vous suggère :'];
-    recettes.slice(0, 3).forEach((recette, index) => {
-      response.push(`\n${index + 1}. ${recette.titre}\nIngrédients nécessaires : ${recette.ingredients}\nInstructions : ${recette.instructions}`);
-    });
-
-    return response.join('\n');
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,14 +69,10 @@ export function ChatBot() {
       // Récupérer l'historique des repas
       const repasHistory = await getRepasHistory();
       
-      // Extraire les ingrédients du message
-      const ingredients = parseIngredientsFromMessage(userMessage);
+      // Obtenir une réponse d'Ollama
+      const response = await ollamaService.generateResponse(userMessage, recettes, repasHistory);
       
-      // Obtenir les recommandations
-      const recommendedRecipes = recommender.findRecipes(ingredients, repasHistory);
-      
-      // Formater et ajouter la réponse
-      const response = formatRecipeResponse(recommendedRecipes);
+      // Ajouter la réponse
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
     } catch (error) {
       console.error('Erreur lors de la recommandation:', error);
