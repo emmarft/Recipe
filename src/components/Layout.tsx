@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ChefHat, Users, Calendar, Search, Plus } from 'lucide-react'
+import { ChefHat, Users, Calendar, Search, Plus, MessageSquare } from 'lucide-react'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -14,6 +14,7 @@ export function Layout({ children }: LayoutProps) {
     { name: 'Rechercher recettes', href: '/search-recipes', icon: Search },
     { name: 'Ajouter un repas', href: '/add-meal', icon: Calendar },
     { name: 'Historique des repas', href: '/meal-history', icon: Users },
+    { name: 'Assistant Culinaire', href: '/assistant', icon: MessageSquare },
   ]
 
   return (

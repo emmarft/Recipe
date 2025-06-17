@@ -6,6 +6,7 @@ import { AddRecipe } from './pages/AddRecipe'
 import { SearchRecipes } from './pages/SearchRecipes'
 import { AddMeal } from './pages/AddMeal'
 import { MealHistory } from './pages/MealHistory'
+import { ChatBot } from './components/ChatBot'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/search-recipes" element={<SearchRecipes />} />
           <Route path="/add-meal" element={<AddMeal />} />
           <Route path="/meal-history" element={<MealHistory />} />
+          <Route path="/assistant" element={<ChatBot />} />
         </Routes>
       </Layout>
     </Router>
